@@ -16,12 +16,12 @@ const planoDeFundo = {
     y: canvas.height - 204,
     desenha() {
         contexto.fillStyle = '#70c5ce';
-        contexto.fillRect(0,0, canvas.width, canvas.height)
+        contexto.fillRect(0, 0, canvas.width, canvas.height)
 
         contexto.drawImage(
             sprites, /* Imagem */
             planoDeFundo.spritex, planoDeFundo.spritey, /* Sprite X, Sprite Y */
-            planoDeFundo.largura, planoDeFundo.altura, /* Tamanho do recorte na sprite */ 
+            planoDeFundo.largura, planoDeFundo.altura, /* Tamanho do recorte na sprite */
             planoDeFundo.x, planoDeFundo.y,
             planoDeFundo.largura, planoDeFundo.altura,
         )
@@ -29,7 +29,7 @@ const planoDeFundo = {
         contexto.drawImage(
             sprites, /* Imagem */
             planoDeFundo.spritex, planoDeFundo.spritey, /* Sprite X, Sprite Y */
-            planoDeFundo.largura, planoDeFundo.altura, /* Tamanho do recorte na sprite */ 
+            planoDeFundo.largura, planoDeFundo.altura, /* Tamanho do recorte na sprite */
             (planoDeFundo.x + planoDeFundo.largura), planoDeFundo.y,
             planoDeFundo.largura, planoDeFundo.altura,
         )
@@ -48,7 +48,7 @@ const chao = {
         contexto.drawImage(
             sprites, /* Imagem */
             chao.spritex, chao.spritey, /* Sprite X, Sprite Y */
-            chao.largura, chao.altura, /* Tamanho do recorte na sprite */ 
+            chao.largura, chao.altura, /* Tamanho do recorte na sprite */
             chao.x, chao.y,
             chao.largura, chao.altura,
         )
@@ -56,7 +56,7 @@ const chao = {
         contexto.drawImage(
             sprites, /* Imagem */
             chao.spritex, chao.spritey, /* Sprite X, Sprite Y */
-            chao.largura, chao.altura, /* Tamanho do recorte na sprite */ 
+            chao.largura, chao.altura, /* Tamanho do recorte na sprite */
             (chao.x + chao.largura), chao.y,
             chao.largura, chao.altura,
         )
@@ -84,21 +84,80 @@ const flappyBird = {
         contexto.drawImage(
             sprites, /* Imagem */
             flappyBird.spritex, flappyBird.spritey, /* Sprite x, Sprite y */
-            flappyBird.largura, flappyBird.altura, /* Tamanho do recorte na sprite */ 
+            flappyBird.largura, flappyBird.altura, /* Tamanho do recorte na sprite */
             flappyBird.x, flappyBird.y,
             flappyBird.largura, flappyBird.altura,
         );
     }
 }
 
-function loop() {
-    flappyBird.atualiza();
+/* Get Ready */
+const mensagemGetReady = {
+    spritex: 134,
+    spritey: 0,
+    largura: 174,
+    altura: 152,
+    x: (canvas.width / 2) - 174 / 2,
+    y: 50,
+    desenha() {
+        contexto.drawImage(
+            sprites, /* Imagem */
+            mensagemGetReady.spritex, mensagemGetReady.spritey, /* Sprite X, Sprite Y */
+            mensagemGetReady.largura, mensagemGetReady.altura, /* Tamanho do recorte na sprite */
+            mensagemGetReady.x, mensagemGetReady.y,
+            mensagemGetReady.largura, mensagemGetReady.altura,
+        );
+    }
+}
 
-    planoDeFundo.desenha();
-    chao.desenha();
-    flappyBird.desenha();
-    
+/* Telas */
+let telaAtiva = {};
+function mudaParaTela(novaTela) {
+    telaAtiva = novaTela;
+}
+
+const telas = {
+    inicio: {
+        desenha() {
+            planoDeFundo.desenha();
+            chao.desenha();
+            flappyBird.desenha();
+            mensagemGetReady.desenha();
+        },
+        click() {
+            mudaParaTela(telas.jogo);
+        },
+        atualiza() {
+
+        }
+    }
+};
+
+telas.jogo = {
+    desenha() {
+        planoDeFundo.desenha();
+        chao.desenha();
+        flappyBird.desenha();
+    },
+    atualiza() {
+        flappyBird.atualiza();
+
+    }
+};
+
+function loop() {
+
+    telaAtiva.desenha();
+    telaAtiva.atualiza();
+
     requestAnimationFrame(loop);
 }
 
+window.addEventListener('click', function() {
+    if (telaAtiva.click) {
+        telaAtiva.click();
+    };
+});
+
+mudaParaTela(telas.inicio);
 loop();
