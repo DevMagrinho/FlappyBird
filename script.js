@@ -1,5 +1,6 @@
 console.log('[DevMagrinho] Flappy Bird')
 
+let frames = 0;
 const som_HIT = new Audio();
 som_HIT.src = './efeitos/efeitos_hit.wav';
 
@@ -40,41 +41,57 @@ const planoDeFundo = {
 }
 
 /* Chão */
-const chao = {
-    spritex: 0,
-    spritey: 610,
-    largura: 224,
-    altura: 112,
-    x: 0,
-    y: canvas.height - 112,
-    desenha() {
-        contexto.drawImage(
-            sprites, /* Imagem */
-            chao.spritex, chao.spritey, /* Sprite X, Sprite Y */
-            chao.largura, chao.altura, /* Tamanho do recorte na sprite */
-            chao.x, chao.y,
-            chao.largura, chao.altura,
-        )
+function criaChao() {
+    const chao = {
+        spritex: 0,
+        spritey: 610,
+        largura: 224,
+        altura: 112,
+        x: 0,
+        y: canvas.height - 112,
 
-        contexto.drawImage(
-            sprites, /* Imagem */
-            chao.spritex, chao.spritey, /* Sprite X, Sprite Y */
-            chao.largura, chao.altura, /* Tamanho do recorte na sprite */
-            (chao.x + chao.largura), chao.y,
-            chao.largura, chao.altura,
-        )
+        atualiza() {
+            const movimentoDoChao = 1;
+            const repeteEm = chao.largura / 2;
+            const movimentacao = chao.x - movimentoDoChao;
+
+            // console.log('[chao.x]', chao.x);
+            // console.log('[repeteEm]',repeteEm);
+            // console.log('[movimentacao]', movimentacao % repeteEm);
+            
+            chao.x = movimentacao % repeteEm;
+        },
+        desenha() {
+            contexto.drawImage(
+                sprites, /* Imagem */
+                chao.spritex, chao.spritey, /* Sprite X, Sprite Y */
+                chao.largura, chao.altura, /* Tamanho do recorte na sprite */
+                chao.x, chao.y,
+                chao.largura, chao.altura,
+            )
+
+            contexto.drawImage(
+                sprites, /* Imagem */
+                chao.spritex, chao.spritey, /* Sprite X, Sprite Y */
+                chao.largura, chao.altura, /* Tamanho do recorte na sprite */
+                (chao.x + chao.largura), chao.y,
+                chao.largura, chao.altura,
+            )
+        }
     }
+    return chao;
 }
+
 
 /* Flappy Bird */
 function fazColisao(flappyBird, chao) {
     const flappyBirdy = flappyBird.y + flappyBird.altura;
     const chaoy = chao.y;
 
-    if(flappyBirdy >= chaoy) {
+    if (flappyBirdy >= chaoy) {
         return true;
     }
-    
+
     return false;
 }
 
@@ -87,19 +104,19 @@ function criaFlappyBird() {
         x: 10,
         y: 50,
         pulo: 3.6,
-    
+
         pula() {
             console.log('devo pular')
             console.log('antes', flappyBird.velocidade);
             flappyBird.velocidade = - flappyBird.pulo;
             console.log('depois', flappyBird.velocidade);
         },
-    
+
         gravidade: 0.25,
         velocidade: 0,
-    
+
         atualiza() {
-            if(fazColisao(flappyBird, chao)) {
+            if (fazColisao(flappyBird, globais.chao)) {
                 console.log('Fez colisão');
                 som_HIT.play();
 
@@ -108,14 +125,35 @@ function criaFlappyBird() {
                 }, 500);
                 return;
             }
+
             flappyBird.velocidade = flappyBird.velocidade + flappyBird.gravidade;
             flappyBird.y = flappyBird.y + flappyBird.velocidade;
         },
-    
+        movimentos: [
+                { spritex: 0, spritey: 0, }, // asa pra cima
+                { spritex: 0, spritey: 26, }, // asa no meio
+                { spritex: 0, spritey: 52, }, // asa pra baixo
+                { spritex: 0, spritey: 26, }, // asa no meio
+            ],
+        frameAtual: 0,
+        atualizaOFrameatual() {
+            const intervaloDeFrames = 10;
+            const passouOIntervalo = frames % intervaloDeFrames === 0;
+
+            if(passouOIntervalo) {
+                const baseDoIncremento = 1;
+                const incremento = baseDoIncremento + flappyBird.frameAtual;
+                const baseRepeticao = flappyBird.movimentos.length;
+                flappyBird.frameAtual = incremento % baseRepeticao;
+            }
+        },
         desenha() {
+            flappyBird.atualizaOFrameatual();
+            const { spritex, spritey } = flappyBird.movimentos[flappyBird.frameAtual]
+            
             contexto.drawImage(
                 sprites, /* Imagem */
-                flappyBird.spritex, flappyBird.spritey, /* Sprite x, Sprite y */
+                spritex, spritey, /* Sprite x, Sprite y */
                 flappyBird.largura, flappyBird.altura, /* Tamanho do recorte na sprite */
                 flappyBird.x, flappyBird.y,
                 flappyBird.largura, flappyBird.altura,
@@ -145,7 +183,7 @@ const flappyBird = {
     velocidade: 0,
 
     atualiza() {
-        if(fazColisao(flappyBird, chao)) {
+        if (fazColisao(flappyBird, chao)) {
             console.log('Fez colisão');
 
             mudaParaTela(telas.inicio);
@@ -191,7 +229,7 @@ let telaAtiva = {};
 function mudaParaTela(novaTela) {
     telaAtiva = novaTela;
 
-    if(telaAtiva.inicializa) {
+    if (telaAtiva.inicializa) {
         telaAtiva.inicializa();
     }
 }
@@ -200,10 +238,11 @@ const telas = {
     inicio: {
         inicializa() {
             globais.flappyBird = criaFlappyBird();
+            globais.chao = criaChao();
         },
         desenha() {
             planoDeFundo.desenha();
-            chao.desenha();
+            globais.chao.desenha();
             globais.flappyBird.desenha();
             mensagemGetReady.desenha();
         },
@@ -211,7 +250,7 @@ const telas = {
             mudaParaTela(telas.jogo);
         },
         atualiza() {
-
+            globais.chao.atualiza();
         }
     }
 };
@@ -219,7 +258,7 @@ const telas = {
 telas.jogo = {
     desenha() {
         planoDeFundo.desenha();
-        chao.desenha();
+        globais.chao.desenha();
         globais.flappyBird.desenha();
     },
     click() {
@@ -235,10 +274,11 @@ function loop() {
     telaAtiva.desenha();
     telaAtiva.atualiza();
 
+    frames = frames + 1;
     requestAnimationFrame(loop);
 }
 
-window.addEventListener('click', function() {
+window.addEventListener('click', function () {
     if (telaAtiva.click) {
         telaAtiva.click();
     };
